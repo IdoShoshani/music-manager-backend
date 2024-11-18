@@ -116,7 +116,3 @@ class TestCoverage:
             assert response.get_json()["success"] is False
             assert "Invalid JSON format" in response.get_json()["error"]
 
-    @pytest.mark.skip("Cannot test __main__ block in unit tests")
-    def test_main_run(self):
-        """בדיקה של הרצת האפליקציה (לא ניתן לכסות ב-unit tests)"""
-        pass  # לא ניתן לבדוק את הרצת האפליקציה בצורה זו
