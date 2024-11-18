@@ -3,12 +3,30 @@ from flask_pymongo import PyMongo
 from bson import ObjectId, errors
 import os
 from dotenv import load_dotenv
+from functools import wraps
+import json
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = os.getenv("MONGO_URI", "mongodb://mongo:27017/music_db")
 mongo = PyMongo(app)
+
+def validate_json(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not request.is_json:
+            return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
+        
+        # נסיון לפרסר את ה-JSON והחזרת שגיאה מתאימה אם נכשל
+        try:
+            # בדיקה מוקדמת של ה-JSON
+            request.get_json(force=True)
+        except Exception:
+            return jsonify({"success": False, "error": "Invalid JSON format"}), 400
+            
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route("/api/artists", methods=["GET"])
 def get_artists():
@@ -21,11 +39,9 @@ def get_artists():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/artists", methods=["POST"])
+@validate_json
 def add_artist():
     try:
-        if not request.is_json:
-            return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
-
         name = request.json.get("name")
         if not name or len(name.strip()) == 0:
             return jsonify({"success": False, "error": "Artist name is required"}), 400
@@ -51,11 +67,9 @@ def delete_artist(artist_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/artists/<artist_id>/songs", methods=["POST"])
+@validate_json
 def add_song(artist_id):
     try:
-        if not request.is_json:
-            return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
-
         title = request.json.get("title")
         duration = request.json.get("duration")
 
@@ -113,11 +127,9 @@ def get_playlists():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/playlists", methods=["POST"])
+@validate_json
 def create_playlist():
     try:
-        if not request.is_json:
-            return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
-
         name = request.json.get("name")
         if not name or len(name.strip()) == 0:
             return jsonify({"success": False, "error": "Playlist name is required"}), 400
@@ -161,11 +173,9 @@ def delete_playlist(playlist_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/playlists/<playlist_id>/songs", methods=["POST"])
+@validate_json
 def add_song_to_playlist(playlist_id):
     try:
-        if not request.is_json:
-            return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
-
         required_fields = ["artist_id", "artist_name", "title", "duration"]
         for field in required_fields:
             if not request.json.get(field):
@@ -228,11 +238,9 @@ def get_favorites():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/favorites/songs", methods=["POST"])
+@validate_json
 def add_favorite_song():
     try:
-        if not request.is_json:
-            return jsonify({"success": False, "error": "Content-Type must be application/json"}), 400
-
         required_fields = ["artist_id", "artist_name", "title", "duration"]
         for field in required_fields:
             if not request.json.get(field):
