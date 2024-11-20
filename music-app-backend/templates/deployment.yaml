@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "music-app-backend.fullname" . }}
+  labels:
+    app: {{ include "music-app-backend.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "music-app-backend.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "music-app-backend.name" . }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: MONGO_URI
+              value: "{{ .Values.env.MONGO_URI }}"
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
