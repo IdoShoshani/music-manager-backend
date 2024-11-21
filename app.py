@@ -12,6 +12,35 @@ app = Flask(__name__)
 app.config["MONGO_URI"] = os.getenv("MONGO_URI", "mongodb://mongo:27017/music_db")
 mongo = PyMongo(app)
 
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    """
+    Health Check endpoint for MongoDB connection.
+
+    This endpoint verifies the connectivity to the MongoDB instance by sending
+    a simple 'ping' command. It returns the health status of the backend
+    and the database connection.
+
+    Returns:
+        200 OK: If MongoDB connection is successful.
+        401 Unauthorized: If there is an authentication error.
+        500 Internal Server Error: For other types of errors (e.g., MongoDB unavailable).
+    """
+    try:
+        # Ping the MongoDB server to check connectivity
+        mongo.cx.admin.command("ping")
+        return jsonify({"success": True, "status": "healthy", "database": "connected"}), 200
+    except Exception as e:
+        # Handle errors, including authentication issues
+        error_message = str(e)
+        if "Authentication failed" in error_message:
+            # Return 401 if there is an authentication issue
+            return jsonify({"success": False, "status": "unhealthy", "error": "Authentication failed"}), 401
+        
+        # Return 500 for any other errors
+        return jsonify({"success": False, "status": "unhealthy", "error": error_message}), 500
+
 def validate_json(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
