@@ -29,17 +29,21 @@ helm uninstall backend-release
 
 The table below lists the configurable parameters and their default values:
 
-| Parameter        | Description                          | Default                                                    |
-| ---------------- | ------------------------------------ | ---------------------------------------------------------- |
-| fullnameOverride | Customized full name for resources   | "music-app-backend"                                        |
-| replicaCount     | Number of replicas                   | 1                                                          |
-| image.repository | Image repository                     | idoshoshani123/music-app-backend                           |
-| image.tag        | Image tag                            | "1.0"                                                      |
-| image.pullPolicy | Image pull policy                    | IfNotPresent                                               |
-| service.type     | Kubernetes service type              | ClusterIP                                                  |
-| service.port     | Service port                         | 5000                                                       |
-| env.MONGO_URI    | Environment variable for MongoDB URI | "mongodb://mongo.mongodb.svc.cluster.local:27017/music_db" |
-| resources        | Resource settings                    | {}                                                         |
+| Parameter                            | Description                          | Default                                                    |
+| ------------------------------------ | ------------------------------------ | ---------------------------------------------------------- |
+| fullnameOverride                     | Customized full name for resources   | "music-app-backend"                                        |
+| replicaCount                         | Number of replicas                   | 1                                                          |
+| image.repository                     | Image repository                     | idoshoshani123/music-app-backend                           |
+| image.tag                            | Image tag                            | "1.0"                                                      |
+| image.pullPolicy                     | Image pull policy                    | IfNotPresent                                               |
+| service.type                         | Kubernetes service type              | ClusterIP                                                  |
+| service.port                         | Service port                         | 5000                                                       |
+| env.MONGO_URI                        | Environment variable for MongoDB URI | "mongodb://mongo.mongodb.svc.cluster.local:27017/music_db" |
+| resources                            | Resource settings                    | {}                                                         |
+| probes.liveness.initialDelaySeconds  | Delay before liveness probe starts   | 10                                                         |
+| probes.liveness.periodSeconds        | Frequency of liveness probe checks   | 5                                                          |
+| probes.readiness.initialDelaySeconds | Delay before readiness probe starts  | 5                                                          |
+| probes.readiness.periodSeconds       | Frequency of readiness probe checks  | 5                                                          |
 
 Values can be modified using the `--set` flag or by editing the `values.yaml` file.
 
@@ -55,7 +59,12 @@ helm install backend-release ./music-app-backend --set env.MONGO_URI="mongodb://
 
 - **Fixed Service Name:** The `fullnameOverride: "music-app-backend"` in `values.yaml` ensures that the Service name is always `music-app-backend`, allowing the frontend to communicate with the backend using this consistent name.
 
-- **Configurable Settings:** All critical parameters are defined in `values.yaml`, enabling easy customization.
+- **Probes for Health Checks:**
+
+  - The `livenessProbe` ensures that Kubernetes can detect if the application is unhealthy and restart it if necessary.
+  - The `readinessProbe` ensures that the application is ready to serve traffic before sending requests to it.
+
+- **Configurable Settings:** All critical parameters, including the health probes, are defined in `values.yaml`, enabling easy customization.
 
 - **Helm Chart Structure:** The structure aligns with the frontend to maintain consistency and simplify maintenance.
 
@@ -87,5 +96,5 @@ helm install backend-release ./music-app-backend --set env.MONGO_URI="mongodb://
 ## **Summary:**
 
 - **Consistent Naming:** Using `fullnameOverride` prevents naming conflicts and ensures smooth communication between the frontend and backend.
-- **Adherence to Best Practices:** The Helm Chart is built following common best practices, with a clear separation between templates and values and detailed documentation.
+- **Health and Readiness Monitoring:** Liveness and readiness probes are configured to ensure the application remains healthy and ready to serve traffic at all times.
 - **Ease of Use and Customization:** Configuration can be easily modified through `values.yaml` or `--set` flags.
