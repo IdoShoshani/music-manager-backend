@@ -36,10 +36,12 @@ spec:
 
         stage('Build') {
             steps {
+                container('docker') {
                 script {
                     // Build the application
                     app = docker.build("${env.IMAGE_NAME}:${env.BUILD_NUMBER}")
                 }
+            }
             }
         }
 
