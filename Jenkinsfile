@@ -6,18 +6,16 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: docker
-    image: docker:20.10-dind
-    command:
-    - cat
-    tty: true
-    volumeMounts:
-    - mountPath: /var/run/docker.sock
-      name: docker-sock
+    - name: ez-docker-helm-build
+      image: ezezeasy/ez-docker-helm-build:1.41
+      imagePullPolicy: Always
+      securityContext:
+        privileged: true
   volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: FileOrCreate
             '''
         }
     }
