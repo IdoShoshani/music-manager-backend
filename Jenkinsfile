@@ -1,22 +1,22 @@
-pipeline{
-    agent all
-    stages{
-        stage("hello world"){
-            steps{
-                script{
+pipeline {
+    agent any
+    stages {
+        stage("hello world") {
+            steps {
+                script {
                     sh 'echo hello world'
                 }
             }
         }
     }
-    post{
-        always{
+    post {
+        always {
             echo "========always========"
         }
-        success{
+        success {
             echo "========pipeline executed successfully ========"
         }
-        failure{
+        failure {
             echo "========pipeline execution failed========"
         }
     }
