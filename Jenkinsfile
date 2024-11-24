@@ -19,6 +19,20 @@ pipeline {
                 }
             }
         }
+
+        stage('Unit Test') {
+            steps {
+                container('python') {
+                    script {
+                        // Install requirements
+                        sh 'pip install -r test_requirements.txt'
+                        // Run unit tests
+                        sh 'pytest --cov=app tests/'
+                    }
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 script {
@@ -40,15 +54,5 @@ pipeline {
                 }
             }
         }
-
-        // Uncomment and modify the following stage if you want to run unit tests
-        // stage('Unit Test') {
-        //     steps {
-        //         script {
-        //             // Run unit tests
-        //             sh 'make test'  // Modify this according to your test process
-        //         }
-        //     }
-        // }
     }
 }
