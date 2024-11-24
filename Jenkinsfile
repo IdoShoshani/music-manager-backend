@@ -6,16 +6,12 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-    - name: ez-docker-helm-build
-      image: ezezeasy/ez-docker-helm-build:1.41
+    - name: build-agent
+      image: idoshoshani123/docker-dnd-aks:latest
       imagePullPolicy: Always
       securityContext:
         privileged: true
-  volumes:
-    - name: docker-socket
-      hostPath:
-        path: /var/run/docker.sock
-        type: FileOrCreate
+
             '''
         }
     }
@@ -36,12 +32,10 @@ spec:
 
         stage('Build') {
             steps {
-                container('docker') {
                 script {
                     // Build the application
                     app = docker.build("${env.IMAGE_NAME}:${env.BUILD_NUMBER}")
                 }
-            }
             }
         }
 
