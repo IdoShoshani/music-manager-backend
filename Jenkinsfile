@@ -19,7 +19,18 @@ pipeline {
                 }
             }
         }
-
+        stage('Python Linter') {
+            steps {
+                container('python') {
+                    script {
+                        // Install requirements
+                        sh  'pip install -r test_requirements.txt'
+                        // Run pylint only for errors
+                        sh 'pylint -E app.py'
+                    }
+                }
+            }
+        }
         stage('Unit Test') {
             steps {
                 container('python') {
