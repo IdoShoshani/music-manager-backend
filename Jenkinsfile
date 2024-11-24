@@ -1,18 +1,8 @@
 pipeline {
     agent {
         kubernetes {
-            yaml '''
-apiVersion: v1
-kind: Pod
-spec:
-  containers:
-    - name: build-agent
-      image: idoshoshani123/docker-dnd-aks:latest
-      imagePullPolicy: Always
-      securityContext:
-        privileged: true
-
-            '''
+            defaultContainer 'docker'
+            yamlFile 'jenkins-pod.yaml'
         }
     }
     environment {
@@ -29,7 +19,6 @@ spec:
                 }
             }
         }
-
         stage('Build') {
             steps {
                 script {
@@ -61,14 +50,5 @@ spec:
         //         }
         //     }
         // }
-    }
-
-    post {
-        always {
-            script {
-                // Clean workspace after each build
-                cleanWs()
-            }
-        }
     }
 }
