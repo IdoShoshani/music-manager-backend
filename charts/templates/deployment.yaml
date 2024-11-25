@@ -17,13 +17,23 @@ spec:
       labels:
         app: {{ include "music-app-backend.name" . }}
     spec:
+      serviceAccountName: secret-copier
+      initContainers:
+        - name: secret-copier
+          image: idoshoshani123/music-app-backend-init-container-copy-secret:latest
+          imagePullPolicy: Always
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-mongodb-credentials
+                  key: mongodb-passwords
             - name: MONGO_URI
-              value: "{{ .Values.env.MONGO_URI }}"
+              value: "mongodb://appUser:$(MONGODB_PASSWORD)@mongodb.mongodb.svc.cluster.local:27017/music_db"
           livenessProbe:
             httpGet:
               path: /health

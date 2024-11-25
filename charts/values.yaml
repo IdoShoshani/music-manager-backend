@@ -12,9 +12,6 @@ service:
   type: ClusterIP
   port: 5000
 
-env:
-  MONGO_URI: "mongodb://mongo.mongodb.svc.cluster.local:27017/music_db"
-
 resources: {}
 
 probes:

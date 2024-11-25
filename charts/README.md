@@ -29,21 +29,21 @@ helm uninstall backend-release
 
 The table below lists the configurable parameters and their default values:
 
-| Parameter                            | Description                          | Default                                                    |
-| ------------------------------------ | ------------------------------------ | ---------------------------------------------------------- |
-| fullnameOverride                     | Customized full name for resources   | "music-app-backend"                                        |
-| replicaCount                         | Number of replicas                   | 1                                                          |
-| image.repository                     | Image repository                     | idoshoshani123/music-app-backend                           |
-| image.tag                            | Image tag                            | "1.0"                                                      |
-| image.pullPolicy                     | Image pull policy                    | IfNotPresent                                               |
-| service.type                         | Kubernetes service type              | ClusterIP                                                  |
-| service.port                         | Service port                         | 5000                                                       |
-| env.MONGO_URI                        | Environment variable for MongoDB URI | "mongodb://mongo.mongodb.svc.cluster.local:27017/music_db" |
-| resources                            | Resource settings                    | {}                                                         |
-| probes.liveness.initialDelaySeconds  | Delay before liveness probe starts   | 10                                                         |
-| probes.liveness.periodSeconds        | Frequency of liveness probe checks   | 5                                                          |
-| probes.readiness.initialDelaySeconds | Delay before readiness probe starts  | 5                                                          |
-| probes.readiness.periodSeconds       | Frequency of readiness probe checks  | 5                                                          |
+| Parameter                            | Description                          | Default                                                                               |
+| ------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------- |
+| fullnameOverride                     | Customized full name for resources   | "music-app-backend"                                                                   |
+| replicaCount                         | Number of replicas                   | 1                                                                                     |
+| image.repository                     | Image repository                     | idoshoshani123/music-app-backend                                                      |
+| image.tag                            | Image tag                            | "1.0"                                                                                 |
+| image.pullPolicy                     | Image pull policy                    | IfNotPresent                                                                          |
+| service.type                         | Kubernetes service type              | ClusterIP                                                                             |
+| service.port                         | Service port                         | 5000                                                                                  |
+| env.MONGO_URI                        | Environment variable for MongoDB URI | "mongodb://user:$(MONGODB_PASSWORD)@mongodb.mongodb.svc.cluster.local:27017/music_db" |
+| resources                            | Resource settings                    | {}                                                                                    |
+| probes.liveness.initialDelaySeconds  | Delay before liveness probe starts   | 10                                                                                    |
+| probes.liveness.periodSeconds        | Frequency of liveness probe checks   | 5                                                                                     |
+| probes.readiness.initialDelaySeconds | Delay before readiness probe starts  | 5                                                                                     |
+| probes.readiness.periodSeconds       | Frequency of readiness probe checks  | 5                                                                                     |
 
 Values can be modified using the `--set` flag or by editing the `values.yaml` file.
 
