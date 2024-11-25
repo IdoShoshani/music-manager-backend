@@ -7,102 +7,74 @@ pipeline {
     }
     environment {
         IMAGE_NAME = 'idoshoshani123/music-app-backend'
-        REGISTRY_URL = 'https://registry.hub.docker.com'
-        DOCKER_CREDS_ID = 'docker-creds'
-        UNIQUE_DOCKERFILE = 'Dockerfile.helm.chart'
+        DOCKER_CREDS = credentials('docker-creds')
+        HELM_CHART_PATH = 'charts'
+        VERSION = "${env.BUILD_NUMBER}"
+    }
+    options {
+        timeout(time: 1, unit: 'HOURS')
     }
     stages {
         stage('Checkout') {
             steps {
-                script {
-                    checkout scm
-                }
+                checkout scm
             }
         }
         stage('Python Linter') {
             steps {
                 container('python') {
-                    script {
-                        sh 'pip install -r test_requirements.txt'
-                        sh 'pylint -E app.py'
-                    }
+                    sh 'pip install -r test_requirements.txt'
+                    sh 'pylint -E app.py'
                 }
             }
         }
         stage('Unit Test') {
             steps {
                 container('python') {
-                    script {
-                        sh 'pip install -r test_requirements.txt'
-                        sh 'pytest --cov=app tests/'
-                    }
+                    sh 'pip install -r test_requirements.txt'
+                    sh 'pytest --cov=app tests/'
                 }
             }
         }
         stage('Build Application Image') {
             steps {
                 script {
-                    app = docker.build("${env.IMAGE_NAME}:${env.BUILD_NUMBER}")
+                    app = docker.build("${env.IMAGE_NAME}:${env.VERSION}")
                 }
             }
         }
         stage('Push Application Image') {
             steps {
                 script {
-                    docker.withRegistry("${env.REGISTRY_URL}", "${env.DOCKER_CREDS_ID}") {
-                        app.push("${env.BUILD_NUMBER}")
+                    docker.withRegistry("", 'docker-creds') {
+                        app.push("${env.VERSION}")
                         app.push("latest")
                     }
                 }
             }
         }
-        stage('Helm Package') {
+        stage('Verify Helm Chart') {
             steps {
-                script {
-                    def helmOutput = sh(
-                        script: 'helm package charts -d ./packages',
-                        returnStdout: true
-                    ).trim()
-                    def chartFile = helmOutput.split(':')[1].trim()
-                    env.CHART_FILE = chartFile
-                    echo "Helm chart packaged: ${env.CHART_FILE}"
-                }
+                sh "helm lint ${env.HELM_CHART_PATH}"
             }
         }
-        stage('Create Unique Dockerfile') {
+        stage('Update & Push Helm Chart') {
             steps {
-                script {
-                    // Create a unique Dockerfile for the Helm chart
-                    sh """
-                    echo "FROM alpine:latest" > ${env.UNIQUE_DOCKERFILE}
-                    echo "COPY ${env.CHART_FILE} /charts/" >> ${env.UNIQUE_DOCKERFILE}
-                    """
-                    echo "Unique Dockerfile created: ${env.UNIQUE_DOCKERFILE}"
-                }
+                sh """
+                    cd ${env.HELM_CHART_PATH}
+                    CHART_VERSION=\$(grep 'version:' Chart.yaml | awk '{print \$2}')
+                    sed -i 's/appVersion:.*/appVersion: ${env.VERSION}/' Chart.yaml
+                    sed -i 's|tag:.*|tag: ${env.VERSION}|' values.yaml
+                    echo "${env.DOCKER_CREDS_PSW}" | helm registry login registry-1.docker.io -u "${env.DOCKER_CREDS_USR}" --password-stdin
+                    helm package .
+                    helm push music-app-backend-\${CHART_VERSION}.tgz oci://registry-1.docker.io/${env.IMAGE_NAME.split('/')[0]}
+                """
             }
         }
-
-        stage('Build Helm Chart Docker Image') {
-            steps {
-                script {
-                    def chartImage = docker.build(
-                        "${env.IMAGE_NAME}-chart:${env.BUILD_NUMBER}",
-                        "-f ${env.UNIQUE_DOCKERFILE} ."
-                    )
-                    env.CHART_IMAGE = chartImage.id
-                }
-            }
-        }
-        stage('Push Helm Chart Image') {
-            steps {
-                script {
-                    docker.withRegistry("${env.REGISTRY_URL}", "${env.DOCKER_CREDS_ID}") {
-                        def chartImage = docker.image("${env.IMAGE_NAME}-chart:${env.BUILD_NUMBER}")
-                        chartImage.push("${env.BUILD_NUMBER}")
-                        chartImage.push("latest")
-                    }
-                }
-            }
+    }
+    post {
+        always {
+            sh 'helm registry logout registry-1.docker.io'
         }
     }
 }
