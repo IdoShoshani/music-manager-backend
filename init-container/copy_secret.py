@@ -22,19 +22,31 @@ def copy_secret():
             api_version="v1",
             kind="Secret",
             metadata=client.V1ObjectMeta(
-                name="app-mongodb-credentials"  # שם הsecret החדש
+                name="app-mongodb-credentials"
             ),
             data={
                 "mongodb-passwords": password
             }
         )
         
-        # Create the secret in the target namespace
-        v1.create_namespaced_secret("default", target_secret)
-        print("Secret successfully copied!")
-        
+        try:
+            # Try to create the secret
+            v1.create_namespaced_secret("default", target_secret)
+            print("Secret successfully created!")
+        except client.exceptions.ApiException as e:
+            if e.status == 409:  # Conflict - secret already exists
+                # Update the existing secret
+                v1.replace_namespaced_secret(
+                    name="app-mongodb-credentials",
+                    namespace="default",
+                    body=target_secret
+                )
+                print("Secret successfully updated!")
+            else:
+                raise e
+                
     except Exception as e:
-        print(f"Error copying secret: {str(e)}")
+        print(f"Error handling secret: {str(e)}")
         raise e
 
 if __name__ == "__main__":
