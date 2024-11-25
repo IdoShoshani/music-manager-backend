@@ -60,15 +60,27 @@ pipeline {
         }
         stage('Update & Push Helm Chart') {
             steps {
-                sh """
-                    cd ${env.HELM_CHART_PATH}
-                    CHART_VERSION=\$(grep 'version:' Chart.yaml | awk '{print \$2}')
-                    sed -i 's/appVersion:.*/appVersion: ${env.VERSION}/' Chart.yaml
-                    sed -i 's|tag:.*|tag: ${env.VERSION}|' values.yaml
-                    echo "${env.DOCKER_CREDS_PSW}" | helm registry login registry-1.docker.io -u "${env.DOCKER_CREDS_USR}" --password-stdin
-                    helm package .
-                    helm push music-app-backend-\${CHART_VERSION}.tgz oci://registry-1.docker.io/${env.IMAGE_NAME.split('/')[0]}
-                """
+                script {
+                    sh """
+                        cd ${env.HELM_CHART_PATH}
+
+                        # Update version and appVersion to the Docker Image version
+                        sed -i 's/^version:.*/version: ${env.VERSION}/' Chart.yaml
+                        sed -i 's/^appVersion:.*/appVersion: ${env.VERSION}/' Chart.yaml
+
+                        # Update the tag in values.yaml to the Docker Image version
+                        sed -i 's|tag:.*|tag: ${env.VERSION}|' values.yaml
+
+                        # Connecting to the OCI Registry
+                        echo "${env.DOCKER_CREDS_PSW}" | helm registry login registry-1.docker.io -u "${env.DOCKER_CREDS_USR}" --password-stdin
+
+                        # Helm Chart packaging
+                        helm package .
+
+                        # Uploading the Helm Chart to the OCI Registry
+                        helm push music-app-backend-${env.VERSION}.tgz oci://registry-1.docker.io/${env.IMAGE_NAME.split('/')[0]}
+                    """
+                }
             }
         }
     }
