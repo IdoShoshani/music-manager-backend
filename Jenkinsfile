@@ -155,7 +155,7 @@ pipeline {
     }
     post {
         always {
-            sh 'helm registry logout registry-1.docker.io'
+            sh 'helm registry logout registry-1.docker.io || true'
         }
     }
 }
