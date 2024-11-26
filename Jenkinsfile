@@ -62,8 +62,8 @@ pipeline {
                 script {
                     def registryNamespace = env.IMAGE_NAME.split('/')[0]
                     withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh '''
-                            cd ${HELM_CHART_PATH}
+                        sh """
+                            cd ${env.HELM_CHART_PATH}
                             
                             # Update appVersion to Docker Image version with quotes
                             sed -i "s/^appVersion:.*/appVersion: \\"${VERSION}\\"/" Chart.yaml
@@ -71,14 +71,20 @@ pipeline {
                             # Update tag to Docker Image version with quotes
                             sed -i "s/^  tag: .*/  tag: \\"${VERSION}\\"/" values.yaml
                             
-                            # Update chart version from x.y.z to x.y.$(z+1)
-                            sed -i "s/\(^version: [0-9]*\.[0-9]*\.\)[0-9]*/\1$(($(grep 'version:' Chart.yaml | awk -F'[.]' '{print $3}') + 1))/" Chart.yaml
+                            # Update chart version
+                            CURRENT_VERSION=\$(grep 'version:' Chart.yaml | awk '{print \$2}')
+                            MAJOR=\$(echo \$CURRENT_VERSION | cut -d. -f1)
+                            MINOR=\$(echo \$CURRENT_VERSION | cut -d. -f2)
+                            PATCH=\$(echo \$CURRENT_VERSION | cut -d. -f3)
+                            NEW_PATCH=\$((\$PATCH + 1))
+                            NEW_VERSION="\$MAJOR.\$MINOR.\$NEW_PATCH"
+                            sed -i "s/^version:.*/version: \$NEW_VERSION/" Chart.yaml
                             
                             # Log in to OCI Registry
-                            echo "$DOCKER_PASS" | helm registry login registry-1.docker.io -u "$DOCKER_USER" --password-stdin
+                            echo "\${DOCKER_PASS}" | helm registry login registry-1.docker.io -u "\${DOCKER_USER}" --password-stdin
                             
                             # Get version from chart.yaml
-                            CHART_VERSION=$(sed -n 's/^version: *//p' Chart.yaml)
+                            CHART_VERSION=\$(sed -n 's/^version: *//p' Chart.yaml)
                             
                             # Package Helm Chart
                             helm package .
@@ -87,8 +93,8 @@ pipeline {
                             ls -la
                             
                             # Push Helm Chart to OCI Registry
-                            helm push music-app-backend-$CHART_VERSION.tgz oci://registry-1.docker.io/idoshoshani123
-                        '''
+                            helm push music-app-backend-\${CHART_VERSION}.tgz oci://registry-1.docker.io/idoshoshani123
+                        """
                     }
                 }
             }
