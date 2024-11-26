@@ -43,6 +43,9 @@ pipeline {
             }
         }
         stage('Push Application Image') {
+            when {
+                branch 'main'
+            }
             steps {
                 script {
                     docker.withRegistry("", 'docker-creds') {
@@ -53,11 +56,17 @@ pipeline {
             }
         }
         stage('Verify Helm Chart') {
+            when {
+                branch 'main'
+            }            
             steps {
                 sh "helm lint ${env.HELM_CHART_PATH}"
             }
         }
         stage('Update & Push Helm Chart') {
+            when {
+                branch 'main'
+            }            
             steps {
                 script {
                     def registryNamespace = env.IMAGE_NAME.split('/')[0]
@@ -100,6 +109,9 @@ pipeline {
             }
         }
         stage('Push Changes to GitLab') {
+            when {
+                branch 'main'
+            }            
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'gitlab-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
