@@ -141,7 +141,8 @@ pipeline {
                             else
                                 git commit -m "ci: Update image tag to ${BUILD_NUMBER}"
                                 # Push to main
-                                git push origin main
+                                git pull
+                                git push origin HEAD:main
                             fi
                         '''
                     }
