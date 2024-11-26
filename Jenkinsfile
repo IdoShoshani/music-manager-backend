@@ -69,6 +69,8 @@ pipeline {
                             # Update appVersion to Docker Image version
                             sed -i "s/^appVersion:.*/appVersion: ${VERSION}/" Chart.yaml
 
+                            sed -i "s/^tag:.*/tag: ${VERSION}/" values.yaml
+
                             # Log in to OCI Registry
                             echo "$DOCKER_PASS" | helm registry login registry-1.docker.io -u "$DOCKER_USER" --password-stdin
 
