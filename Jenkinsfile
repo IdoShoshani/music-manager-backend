@@ -90,6 +90,48 @@ pipeline {
                 }
             }
         }
+        stage('Push Changes to GitLab') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'gitlab-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                        sh '''
+                            set -e
+                            
+                            # Configure git
+                            git config --global --add safe.directory "${WORKSPACE}"
+                            git config --global user.email "jenkins@example.com"
+                            git config --global user.name "Jenkins"
+                            
+                            # Set git credentials helper
+                            git config --global credential.helper '!f() { echo "username=${USERNAME}"; echo "password=${PASSWORD}"; }; f'
+                            
+                            # Ensure we're in the right directory
+                            cd "${WORKSPACE}"
+                            
+                            # Setup remote with auth
+                            git remote set-url origin "https://${USERNAME}:${PASSWORD}@gitlab.com/sela-tracks/1109/students/idosh/final_project/application/music-manager-backend.git"
+                            
+                            # Ensure we're on the right branch
+                            git fetch origin
+                            git checkout -B 6-create-jenkins-pipeline-for-backend origin/6-create-jenkins-pipeline-for-backend || git checkout -b 6-create-jenkins-pipeline-for-backend
+                            
+                            # Stage and commit changes
+                            git add charts/Chart.yaml
+                            git add charts/values.yaml
+                            git add charts/*.tgz
+                            
+                            # Only commit if there are changes
+                            if git diff --staged --quiet; then
+                                echo "No changes to commit"
+                            else
+                                git commit -m "ci: Update image tag to ${BUILD_NUMBER}"
+                                git push origin HEAD:6-create-jenkins-pipeline-for-backend
+                            fi
+                        '''
+                    }
+                }
+            }
+        }
     }
     post {
         always {
