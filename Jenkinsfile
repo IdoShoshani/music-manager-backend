@@ -61,28 +61,28 @@ pipeline {
             steps {
                 script {
                     def registryNamespace = env.IMAGE_NAME.split('/')[0]
-
                     withCredentials([usernamePassword(credentialsId: 'docker-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         sh '''
                             cd ${HELM_CHART_PATH}
-
-                            # Update appVersion to Docker Image version
-                            sed -i "s/^appVersion:.*/appVersion: ${VERSION}/" Chart.yaml
-
-                            sed -i "s/^tag:.*/tag: ${VERSION}/" values.yaml
-
+                            
+                            # Update appVersion to Docker Image version with quotes
+                            sed -i "s/^appVersion:.*/appVersion: \\"${VERSION}\\"/" Chart.yaml
+                            
+                            # Update tag to Docker Image version with quotes
+                            sed -i "s/^  tag: .*/  tag: \\"${VERSION}\\"/" values.yaml
+                            
                             # Log in to OCI Registry
                             echo "$DOCKER_PASS" | helm registry login registry-1.docker.io -u "$DOCKER_USER" --password-stdin
-
+                            
                             # Get version from chart.yaml
                             CHART_VERSION=$(sed -n 's/^version: *//p' Chart.yaml)
-
+                            
                             # Package Helm Chart
                             helm package .
-
+                            
                             # Debug files
-                            ls -la 
-
+                            ls -la
+                            
                             # Push Helm Chart to OCI Registry
                             helm push music-app-backend-$CHART_VERSION.tgz oci://registry-1.docker.io/idoshoshani123
                         '''
@@ -118,7 +118,6 @@ pipeline {
                             # Stage and commit changes
                             git add charts/Chart.yaml
                             git add charts/values.yaml
-                            git add charts/*.tgz
                             
                             # Only commit if there are changes
                             if git diff --staged --quiet; then
