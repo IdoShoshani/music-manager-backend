@@ -136,6 +136,7 @@ pipeline {
                                 echo "No changes to commit"
                             else
                                 git commit -m "ci: Update image tag to ${BUILD_NUMBER}"
+                                git pull
                                 # Push to the current branch
                                 git push origin HEAD:main
                             fi
