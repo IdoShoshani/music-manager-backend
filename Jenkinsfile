@@ -71,6 +71,9 @@ pipeline {
                             # Update tag to Docker Image version with quotes
                             sed -i "s/^  tag: .*/  tag: \\"${VERSION}\\"/" values.yaml
                             
+                            # Update chart version from x.y.z to x.y.$(z+1)
+                            sed -i "s/\(^version: [0-9]*\.[0-9]*\.\)[0-9]*/\1$(($(grep 'version:' Chart.yaml | awk -F'[.]' '{print $3}') + 1))/" Chart.yaml
+                            
                             # Log in to OCI Registry
                             echo "$DOCKER_PASS" | helm registry login registry-1.docker.io -u "$DOCKER_USER" --password-stdin
                             
